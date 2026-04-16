@@ -607,6 +607,7 @@
                     reference: record.fields.Reference,
                     index: record.fields.Index,
                     level: record.fields['Watch Level'],
+                    correction: record.fields.correction,
                     currentLevel: record.fields['Current Level'] || currentLevels[record.fields.Index] || 0,
                     timestamp: record.fields.Timestamp
                 }));
@@ -640,7 +641,8 @@
                             'Reference': entry.reference,
                             'Index': entry.index,
                             'Watch Level': entry.level,
-                            'Current Level': entry.currentLevel
+                            'Current Level': entry.currentLevel,
+                            'correction': entry.correction
                         }
                     })
                 });
@@ -658,6 +660,7 @@
                     reference: data.fields.Reference,
                     index: data.fields.Index,
                     level: data.fields['Watch Level'],
+                    correction: data.fields.correction,
                     currentLevel: data.fields['Current Level'] || entry.currentLevel,
                     timestamp: data.fields.Timestamp
                 });
@@ -768,6 +771,7 @@
                             <th>PIA Name</th>
                             <th>Reference</th>
                             <th>Index</th>
+                            <th>% Correction</th>
                             <th>Watch Level</th>
                             <th>Current Level</th>
                             <th>% Distance</th>
@@ -787,7 +791,8 @@
                                     <td><span class="pia-tag ${piaClass}">${entry.pia}</span></td>
                                     <td>${escapeHtml(entry.reference)}</td>
                                     <td><span class="index-tag">${entry.index}</span></td>
-                                    <td><strong>${entry.level ? entry.level.toLocaleString() : 'N/A'}</strong></td>
+                                    <td><strong>${entry.correction ? entry.correction + '%' : 'N/A'}</strong></td>
+                                    <td>${entry.level ? entry.level.toLocaleString() : 'N/A'}</td>
                                     <td>${entry.currentLevel ? entry.currentLevel.toLocaleString() : 'N/A'}</td>
                                     <td class="${distanceClass}">${percentDistance > 0 ? '+' : ''}${percentDistance}%</td>
                                     <td>${date}</td>
@@ -920,12 +925,30 @@
                 return;
             }
 
+            // Calculate correction %
+            let correction = null;
+            const selectedRadio = document.querySelector('input[name="percentage"]:checked');
+            
+            if (selectedRadio) {
+                // User selected radio button
+                correction = parseFloat(selectedRadio.value);
+            } else {
+                // User entered manual level - calculate %
+                const currentLevel = currentLevels[indicesSelect.value];
+                const watchLevel = parseFloat(levelInput.value);
+                if (currentLevel && watchLevel) {
+                    correction = ((watchLevel - currentLevel) / currentLevel * 100);
+                    correction = Math.round(correction * 100) / 100; // Round to 2 decimals
+                }
+            }
+
             const entry = {
                 pia: piaSelect.value,
                 reference: referenceInput.value.trim(),
                 index: indicesSelect.value,
                 level: parseFloat(levelInput.value),
-                currentLevel: currentLevels[indicesSelect.value] || 0
+                currentLevel: currentLevels[indicesSelect.value] || 0,
+                correction: correction
             };
 
             try {
