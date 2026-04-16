@@ -80,7 +80,7 @@
 
         .current-levels {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
             margin-bottom: 2rem;
         }
@@ -488,7 +488,7 @@
         <header>
             <h1>📊 Equity Level Monitoring</h1>
             <p>Track index watch levels by PIA</p>
-            <div style="color: #666; font-size: 0.75rem; margin-top: 0.5rem;">v1.1 - Cache: <span id="cache-buster">2025-04-16-2300</span></div>
+            <div style="color: #666; font-size: 0.75rem; margin-top: 0.5rem;">v1.2 - Cache: <span id="cache-buster">2025-04-17-0800</span></div>
             <div class="status-bar">
                 <span class="connected">Connected to Airtable</span>
                 <span id="entry-stats">Loading entries...</span>
@@ -505,16 +505,6 @@
                 <h3>S&P 500</h3>
                 <div class="level-value" id="sp500-level">--</div>
                 <div class="level-time" id="sp500-time">Loading...</div>
-            </div>
-            <div class="level-card">
-                <h3>MSCI Europe</h3>
-                <div class="level-value" id="msci-europe-level">--</div>
-                <div class="level-time" id="msci-europe-time">Loading...</div>
-            </div>
-            <div class="level-card">
-                <h3>MSCI Japan</h3>
-                <div class="level-value" id="msci-japan-level">--</div>
-                <div class="level-time" id="msci-japan-time">Loading...</div>
             </div>
         </section>
 
@@ -556,8 +546,6 @@
                             <option value="">Select Index...</option>
                             <option value="MSCI World">MSCI World</option>
                             <option value="S&P500">S&P 500</option>
-                            <option value="MSCI Europe">MSCI Europe</option>
-                            <option value="MSCI Japan">MSCI Japan</option>
                         </select>
                         <div class="error-message" id="indices-error">Please select an index</div>
                     </div>
@@ -630,8 +618,6 @@
                         <option value="">All</option>
                         <option value="MSCI World">MSCI World</option>
                         <option value="S&P500">S&P 500</option>
-                        <option value="MSCI Europe">MSCI Europe</option>
-                        <option value="MSCI Japan">MSCI Japan</option>
                     </select>
                 </div>
                 <button class="filter-btn" id="clear-filters" onclick="clearFilters()">Clear Filters</button>
@@ -681,8 +667,6 @@
                 <select id="edit-index" style="width: 100%; background: #0f0f18; border: 1px solid #3a3a4a; border-radius: 8px; padding: 0.75rem; color: #fff;">
                     <option value="MSCI World">MSCI World</option>
                     <option value="S&P500">S&P 500</option>
-                    <option value="MSCI Europe">MSCI Europe</option>
-                    <option value="MSCI Japan">MSCI Japan</option>
                 </select>
             </div>
             
@@ -707,12 +691,10 @@
         const AIRTABLE_TABLE_NAME = 'Table%201';
         const AIRTABLE_API_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}`;
 
-        // Current index levels
+        // Current index levels - updated via live API
         let currentLevels = {
-            'MSCI World': 4592,
-            'S&P500': 7023,
-            'MSCI Europe': 2800,
-            'MSCI Japan': 1450
+            'MSCI World': 0,
+            'S&P500': 0
         };
 
         // Store entries
@@ -1321,27 +1303,56 @@
         // ============================================
 
         async function fetchIndexLevels() {
+            let sp500Updated = false;
+            let msciWorldUpdated = false;
+            
+            // Fetch S&P 500
             try {
                 const sp500Response = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?interval=1d&range=1d');
                 const sp500Data = await sp500Response.json();
-                if (sp500Data.chart && sp500Data.chart.result) {
-                    currentLevels['S&P500'] = sp500Data.chart.result[0].meta.regularMarketPrice;
-                    document.getElementById('sp500-level').textContent = currentLevels['S&P500'].toLocaleString('en-US', {maximumFractionDigits: 2});
-                    document.getElementById('sp500-time').textContent = new Date().toLocaleString();
+                if (sp500Data.chart && sp500Data.chart.result && sp500Data.chart.result[0]) {
+                    const meta = sp500Data.chart.result[0].meta;
+                    const price = meta.regularMarketPrice || meta.previousClose;
+                    if (price) {
+                        currentLevels['S&P500'] = price;
+                        document.getElementById('sp500-level').textContent = price.toLocaleString('en-US', {maximumFractionDigits: 2});
+                        document.getElementById('sp500-time').textContent = new Date().toLocaleString();
+                        sp500Updated = true;
+                    }
                 }
-
             } catch (e) {
-                document.getElementById('sp500-level').textContent = currentLevels['S&P500'].toLocaleString();
+                console.error('S&P 500 fetch error:', e);
+            }
+
+            if (!sp500Updated) {
+                document.getElementById('sp500-level').textContent = currentLevels['S&P500'] ? currentLevels['S&P500'].toLocaleString() : '--';
                 document.getElementById('sp500-time').textContent = 'Using cached data';
             }
 
-            // Other indices use approximate values
-            document.getElementById('msci-world-level').textContent = currentLevels['MSCI World'].toLocaleString();
-            document.getElementById('msci-world-time').textContent = new Date().toLocaleString();
-            document.getElementById('msci-europe-level').textContent = currentLevels['MSCI Europe'].toLocaleString();
-            document.getElementById('msci-europe-time').textContent = new Date().toLocaleString();
-            document.getElementById('msci-japan-level').textContent = currentLevels['MSCI Japan'].toLocaleString();
-            document.getElementById('msci-japan-time').textContent = new Date().toLocaleString();
+            // Fetch MSCI World (using URTH as proxy)
+            try {
+                const msciResponse = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/URTH?interval=1d&range=1d');
+                const msciData = await msciResponse.json();
+                if (msciData.chart && msciData.chart.result && msciData.chart.result[0]) {
+                    const meta = msciData.chart.result[0].meta;
+                    const price = meta.regularMarketPrice || meta.previousClose;
+                    if (price) {
+                        currentLevels['MSCI World'] = price;
+                        document.getElementById('msci-world-level').textContent = price.toLocaleString('en-US', {maximumFractionDigits: 2});
+                        document.getElementById('msci-world-time').textContent = new Date().toLocaleString();
+                        msciWorldUpdated = true;
+                    }
+                }
+            } catch (e) {
+                console.error('MSCI World fetch error:', e);
+            }
+
+            if (!msciWorldUpdated) {
+                document.getElementById('msci-world-level').textContent = currentLevels['MSCI World'] ? currentLevels['MSCI World'].toLocaleString() : '--';
+                document.getElementById('msci-world-time').textContent = 'Using cached data';
+            }
+            
+            return { sp500Updated, msciWorldUpdated };
         }
 
         // ============================================
@@ -1358,12 +1369,6 @@
 
         // Start the app
         init();
-
-        // Refresh index levels every 5 minutes (and re-render table to update % Distance)
-        setInterval(async () => {
-            await fetchIndexLevels();
-            renderTable(); // Re-render to update % Distance with new index levels
-        }, 300000);
     </script>
 </body>
 </html>
