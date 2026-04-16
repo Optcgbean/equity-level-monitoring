@@ -398,6 +398,57 @@
         .level-positive { color: #00ff7f; }
         .level-negative { color: #ff4757; }
 
+        .sort-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .sort-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sort-group label {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .sort-group select {
+            background: #0f0f18;
+            border: 1px solid #3a3a4a;
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            color: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .sort-btn {
+            background: #2a2a3a;
+            border: 1px solid #3a3a4a;
+            color: #aaa;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .sort-btn:hover {
+            background: #3a3a4a;
+            color: #fff;
+        }
+
+        .sort-btn.active {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+            color: #00d4ff;
+        }
+
         .empty-state {
             text-align: center;
             padding: 3rem;
@@ -550,6 +601,17 @@
                 📋 Monitoring Entries
                 <span class="data-count" id="entry-count">(0 entries)</span>
             </h2>
+            <div class="sort-controls">
+                <div class="sort-group">
+                    <label>Sort by:</label>
+                    <select id="sort-field">
+                        <option value="pia">PIA Name</option>
+                        <option value="index">Index</option>
+                        <option value="timestamp">Date Added</option>
+                    </select>
+                </div>
+                <button class="sort-btn" id="sort-direction" onclick="toggleSortDirection()">↓ Desc</button>
+            </div>
             <div class="table-container" id="table-container">
                 <div class="empty-state">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="64" height="64" style="margin-bottom: 1rem; opacity: 0.5;">
@@ -582,6 +644,55 @@
 
         // Store entries
         let entries = [];
+
+        // Sorting state
+        let sortState = {
+            field: 'pia',
+            direction: 'asc'
+        };
+
+        // Toggle sort direction
+        window.toggleSortDirection = function() {
+            sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+            const btn = document.getElementById('sort-direction');
+            btn.textContent = sortState.direction === 'asc' ? '↑ Asc' : '↓ Desc';
+            renderTable();
+        };
+
+        // Sort entries based on current sort state
+        function sortEntries(entriesToSort) {
+            return [...entriesToSort].sort((a, b) => {
+                let valA, valB;
+                
+                switch(sortState.field) {
+                    case 'pia':
+                        valA = a.pia || '';
+                        valB = b.pia || '';
+                        break;
+                    case 'index':
+                        valA = a.index || '';
+                        valB = b.index || '';
+                        break;
+                    case 'timestamp':
+                        valA = a.timestamp || '';
+                        valB = b.timestamp || '';
+                        break;
+                    default:
+                        valA = a.pia || '';
+                        valB = b.pia || '';
+                }
+                
+                // Handle string comparison
+                if (typeof valA === 'string') {
+                    valA = valA.toLowerCase();
+                    valB = valB.toLowerCase();
+                }
+                
+                if (valA < valB) return sortState.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return sortState.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
 
         // ============================================
         // AIRTABLE API FUNCTIONS
@@ -751,7 +862,10 @@
         function renderTable() {
             const container = document.getElementById('table-container');
             
-            if (entries.length === 0) {
+            // Sort entries before rendering
+            const sortedEntries = sortEntries(entries);
+            
+            if (sortedEntries.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="64" height="64" style="margin-bottom: 1rem; opacity: 0.5;">
@@ -781,7 +895,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${entries.map(entry => {
+                        ${sortedEntries.map(entry => {
                             const piaClass = 'pia-' + entry.pia;
                             // Use LIVE current level for dynamic % distance calculation
                             const liveCurrentLevel = currentLevels[entry.index] || entry.currentLevel || 0;
@@ -877,6 +991,15 @@
                 }
             }
         });
+
+        // Sort field change handler
+        const sortFieldSelect = document.getElementById('sort-field');
+        if (sortFieldSelect) {
+            sortFieldSelect.addEventListener('change', function() {
+                sortState.field = this.value;
+                renderTable();
+            });
+        }
 
         // Validation
         function validateForm() {
