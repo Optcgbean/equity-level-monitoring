@@ -839,6 +839,30 @@
             }
         }
 
+        // Execute action based on dropdown selection
+        window.executeAction = function(recordId) {
+            const select = document.getElementById(`action-${recordId}`);
+            const action = select.value;
+            
+            if (!action) {
+                showGlobalError('Please select an action first');
+                return;
+            }
+            
+            if (action === 'delete') {
+                deleteEntry(recordId);
+            } else if (action === 'edit') {
+                // For now, just show an alert. Full edit would require a modal form
+                const entry = entries.find(e => e.id === recordId);
+                if (entry) {
+                    alert(`Edit functionality coming soon!\n\nCurrent entry:\nPIA: ${entry.pia}\nReference: ${entry.reference}\nIndex: ${entry.index}\nWatch Level: ${entry.level}`);
+                }
+            }
+            
+            // Reset dropdown
+            select.value = '';
+        };
+
         // ============================================
         // UI FUNCTIONS
         // ============================================
@@ -923,7 +947,16 @@
                                     <td>${liveCurrentLevel ? liveCurrentLevel.toLocaleString() : 'N/A'}</td>
                                     <td class="${distanceClass}">${percentDistance > 0 ? '+' : ''}${percentDistance}%</td>
                                     <td>${date}</td>
-                                    <td><button class="btn btn-danger" onclick="window.deleteEntry('${entry.id}')">Delete</button></td>
+                                    <td>
+                                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                            <select id="action-${entry.id}" style="background: #0f0f18; border: 1px solid #3a3a4a; border-radius: 6px; padding: 0.4rem; color: #fff; font-size: 0.85rem;">
+                                                <option value="">Action...</option>
+                                                <option value="edit">Edit</option>
+                                                <option value="delete">Delete</option>
+                                            </select>
+                                            <button class="btn btn-danger" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;" onclick="executeAction('${entry.id}')">Go</button>
+                                        </div>
+                                    </td>
                                 </tr>
                             `;
                         }).join('')}
@@ -1118,8 +1151,9 @@
             calcNote.classList.remove('show');
         });
 
-        // Make deleteEntry globally accessible
+        // Make functions globally accessible
         window.deleteEntry = deleteEntry;
+        window.executeAction = executeAction;
 
         // ============================================
         // FETCH INDEX LEVELS (Yahoo Finance)
