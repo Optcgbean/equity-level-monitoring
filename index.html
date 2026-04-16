@@ -783,7 +783,9 @@
                     <tbody>
                         ${entries.map(entry => {
                             const piaClass = 'pia-' + entry.pia;
-                            const percentDistance = entry.currentLevel ? ((entry.level - entry.currentLevel) / entry.currentLevel * 100).toFixed(2) : '0.00';
+                            // Use LIVE current level for dynamic % distance calculation
+                            const liveCurrentLevel = currentLevels[entry.index] || entry.currentLevel || 0;
+                            const percentDistance = liveCurrentLevel && entry.level ? ((entry.level - liveCurrentLevel) / liveCurrentLevel * 100).toFixed(2) : '0.00';
                             const distanceClass = parseFloat(percentDistance) >= 0 ? 'level-positive' : 'level-negative';
                             const date = entry.timestamp ? new Date(entry.timestamp).toLocaleDateString() : 'N/A';
                             
@@ -792,9 +794,9 @@
                                     <td><span class="pia-tag ${piaClass}">${entry.pia}</span></td>
                                     <td>${escapeHtml(entry.reference)}</td>
                                     <td><span class="index-tag">${entry.index}</span></td>
-                                    <td><strong>${entry.correction ? entry.correction + '%' : 'N/A'}</strong></td>
+                                    <td><strong>${entry.correction !== null && entry.correction !== undefined ? entry.correction + '%' : 'N/A'}</strong></td>
                                     <td>${entry.level ? entry.level.toLocaleString() : 'N/A'}</td>
-                                    <td>${entry.currentLevel ? entry.currentLevel.toLocaleString() : 'N/A'}</td>
+                                    <td>${liveCurrentLevel ? liveCurrentLevel.toLocaleString() : 'N/A'}</td>
                                     <td class="${distanceClass}">${percentDistance > 0 ? '+' : ''}${percentDistance}%</td>
                                     <td>${date}</td>
                                     <td><button class="btn btn-danger" onclick="window.deleteEntry('${entry.id}')">Delete</button></td>
@@ -1019,8 +1021,11 @@
         // Start the app
         init();
 
-        // Refresh index levels every 5 minutes
-        setInterval(fetchIndexLevels, 300000);
+        // Refresh index levels every 5 minutes (and re-render table to update % Distance)
+        setInterval(async () => {
+            await fetchIndexLevels();
+            renderTable(); // Re-render to update % Distance with new index levels
+        }, 300000);
     </script>
 </body>
 </html>
