@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equity Level Monitoring</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 0 3rem;
+            border-bottom: 1px solid #2a2a3a;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        .current-levels {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .level-card {
+            background: #151520;
+            border: 1px solid #2a2a3a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .level-card h3 {
+            font-size: 0.85rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .level-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+
+        .level-time {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .form-section {
+            background: #151520;
+            border: 1px solid #2a2a3a;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #aaa;
+        }
+
+        .form-group label .required {
+            color: #ff4757;
+            margin-left: 2px;
+        }
+
+        select, input[type="text"], input[type="number"] {
+            background: #0f0f18;
+            border: 1px solid #3a3a4a;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: #fff;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+
+        select option {
+            background: #151520;
+            color: #fff;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            background: #0f0f18;
+            border: 1px solid #3a3a4a;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .radio-option:hover {
+            border-color: #00d4ff;
+        }
+
+        .radio-option input[type="radio"] {
+            accent-color: #00d4ff;
+        }
+
+        .radio-option.selected {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .helper-text {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        .error-message {
+            color: #ff4757;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .form-group.error input,
+        .form-group.error select {
+            border-color: #ff4757;
+        }
+
+        .submit-section {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #2a2a3a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #7b2cbf);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: #2a2a3a;
+            color: #aaa;
+        }
+
+        .btn-secondary:hover {
+            background: #3a3a4a;
+        }
+
+        .global-error {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid #ff4757;
+            color: #ff4757;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .global-error.show {
+            display: block;
+        }
+
+        .success-message {
+            background: rgba(0, 255, 127, 0.1);
+            border: 1px solid #00ff7f;
+            color: #00ff7f;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .data-section {
+            background: #151520;
+            border: 1px solid #2a2a3a;
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .data-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .data-count {
+            font-size: 0.9rem;
+            color: #888;
+            font-weight: normal;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background: #0f0f18;
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #aaa;
+            border-bottom: 1px solid #2a2a3a;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #2a2a3a;
+            color: #e0e0e0;
+        }
+
+        tr:hover {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .pia-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .pia-bosco { background: rgba(0, 212, 255, 0.2); color: #00d4ff; }
+        .pia-gloria { background: rgba(255, 105, 180, 0.2); color: #ff69b4; }
+        .pia-christie { background: rgba(255, 165, 0, 0.2); color: #ffa500; }
+        .pia-rebecca { background: rgba(138, 43, 226, 0.2); color: #8a2be2; }
+        .pia-joseph { background: rgba(50, 205, 50, 0.2); color: #32cd32; }
+        .pia-tina { background: rgba(255, 20, 147, 0.2); color: #ff1493; }
+        .pia-sharon { background: rgba(0, 191, 255, 0.2); color: #00bfff; }
+        .pia-terry { background: rgba(255, 215, 0, 0.2); color: #ffd700; }
+
+        .index-tag {
+            font-weight: 600;
+        }
+
+        .level-positive { color: #00ff7f; }
+        .level-negative { color: #ff4757; }
+
+        .delete-btn {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid #ff4757;
+            color: #ff4757;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #ff4757;
+            color: #fff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00d4ff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .calculation-note {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 3px solid #00d4ff;
+            padding: 0.75rem 1rem;
+            margin-top: 0.5rem;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.85rem;
+            color: #aaa;
+            display: none;
+        }
+
+        .calculation-note.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .radio-group {
+                justify-content: center;
+            }
+
+            th, td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Equity Level Monitoring</h1>
+            <p>Track index watch levels by PIA</p>
+        </header>
+
+        <section class="current-levels" id="current-levels">
+            <div class="level-card">
+                <h3>MSCI World</h3>
+                <div class="level-value" id="msci-world-level">--</div>
+                <div class="level-time" id="msci-world-time">Loading...</div>
+            </div>
+            <div class="level-card">
+                <h3>S&P 500</h3>
+                <div class="level-value" id="sp500-level">--</div>
+                <div class="level-time" id="sp500-time">Loading...</div>
+            </div>
+            <div class="level-card">
+                <h3>MSCI Europe</h3>
+                <div class="level-value" id="msci-europe-level">--</div>
+                <div class="level-time" id="msci-europe-time">Loading...</div>
+            </div>
+            <div class="level-card">
+                <h3>MSCI Japan</h3>
+                <div class="level-value" id="msci-japan-level">--</div>
+                <div class="level-time" id="msci-japan-time">Loading...</div>
+            </div>
+        </section>
+
+        <section class="form-section">
+            <h2>➕ Add New Entry</h2>
+            
+            <div class="global-error" id="global-error"></div>
+            <div class="success-message" id="success-message"></div>
+
+            <form id="monitoring-form">
+                <div class="form-grid">
+                    <div class="form-group" id="pia-group">
+                        <label>PIA Name <span class="required">*</span></label>
+                        <select id="pia-name" required>
+                            <option value="">Select PIA...</option>
+                            <option value="Bosco">Bosco</option>
+                            <option value="Gloria">Gloria</option>
+                            <option value="Christie">Christie</option>
+                            <option value="Rebecca">Rebecca</option>
+                            <option value="Joseph">Joseph</option>
+                            <option value="Tina">Tina</option>
+                            <option value="Sharon">Sharon</option>
+                            <option value="Terry">Terry</option>
+                        </select>
+                        <div class="error-message" id="pia-error">Please select a PIA Name</div>
+                    </div>
+
+                    <div class="form-group" id="reference-group">
+                        <label>Reference <span class="required">*</span></label>
+                        <input type="text" id="reference" placeholder="Enter reference text..." required>
+                        <div class="error-message" id="reference-error">Please enter a reference</div>
+                    </div>
+
+                    <div class="form-group" id="indices-group">
+                        <label>Indices <span class="required">*</span></label>
+                        <select id="indices" required>
+                            <option value="">Select Index...</option>
+                            <option value="MSCI World">MSCI World</option>
+                            <option value="S&P500">S&P 500</option>
+                            <option value="MSCI Europe">MSCI Europe</option>
+                            <option value="MSCI Japan">MSCI Japan</option>
+                        </select>
+                        <div class="error-message" id="indices-error">Please select an index</div>
+                    </div>
+
+                    <div class="form-group" id="level-group">
+                        <label>Index Level To Watch <span class="required">*</span></label>
+                        <input type="number" id="index-level" placeholder="Enter level or use % below..." step="0.01">
+                        <div class="helper-text">Enter a number OR select a % below to auto-calculate</div>
+                        <div class="error-message" id="level-error">Please enter a valid number</div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label>Quick Calculate (from current index level)</label>
+                    <div class="radio-group" id="percentage-group">
+                        <label class="radio-option" data-value="-5">
+                            <input type="radio" name="percentage" value="-5">
+                            <span>-5%</span>
+                        </label>
+                        <label class="radio-option" data-value="-10">
+                            <input type="radio" name="percentage" value="-10">
+                            <span>-10%</span>
+                        </label>
+                        <label class="radio-option" data-value="-15">
+                            <input type="radio" name="percentage" value="-15">
+                            <span>-15%</span>
+                        </label>
+                        <label class="radio-option" data-value="-20">
+                            <input type="radio" name="percentage" value="-20">
+                            <span>-20%</span>
+                        </label>
+                    </div>
+                    <div class="calculation-note" id="calc-note"></div>
+                </div>
+
+                <div class="submit-section">
+                    <button type="button" class="btn btn-secondary" id="clear-btn">Clear Form</button>
+                    <button type="submit" class="btn btn-primary">Submit Entry</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="data-section">
+            <h2>
+                📋 Monitoring Entries
+                <span class="data-count" id="entry-count">(0 entries)</span>
+            </h2>
+            <div class="table-container" id="table-container">
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                    </svg>
+                    <p>No entries yet. Fill out the form above to get started.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Current index levels (will be updated from API)
+        let currentLevels = {
+            'MSCI World': 4592,
+            'S&P500': 7023,
+            'MSCI Europe': 2800,
+            'MSCI Japan': 1450
+        };
+
+        // Load entries from localStorage
+        let entries = JSON.parse(localStorage.getItem('equityEntries') || '[]');
+
+        // Fetch real index levels (using free API)
+        async function fetchIndexLevels() {
+            try {
+                // S&P 500 from Yahoo Finance
+                const sp500Response = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?interval=1d&range=1d');
+                const sp500Data = await sp500Response.json();
+                if (sp500Data.chart && sp500Data.chart.result) {
+                    currentLevels['S&P500'] = sp500Data.chart.result[0].meta.regularMarketPrice;
+                    document.getElementById('sp500-level').textContent = currentLevels['S&P500'].toLocaleString('en-US', {maximumFractionDigits: 2});
+                    document.getElementById('sp500-time').textContent = new Date().toLocaleString();
+                }
+            } catch (e) {
+                document.getElementById('sp500-level').textContent = currentLevels['S&P500'].toLocaleString();
+                document.getElementById('sp500-time').textContent = 'Using cached data';
+            }
+
+            // For other indices, use approximate values or alternative sources
+            // MSCI World
+            document.getElementById('msci-world-level').textContent = currentLevels['MSCI World'].toLocaleString();
+            document.getElementById('msci-world-time').textContent = new Date().toLocaleString();
+
+            // MSCI Europe (approximate using STOXX 600 or similar)
+            document.getElementById('msci-europe-level').textContent = currentLevels['MSCI Europe'].toLocaleString();
+            document.getElementById('msci-europe-time').textContent = new Date().toLocaleString();
+
+            // MSCI Japan (approximate using Nikkei)
+            document.getElementById('msci-japan-level').textContent = currentLevels['MSCI Japan'].toLocaleString();
+            document.getElementById('msci-japan-time').textContent = new Date().toLocaleString();
+        }
+
+        // Form elements
+        const form = document.getElementById('monitoring-form');
+        const piaSelect = document.getElementById('pia-name');
+        const referenceInput = document.getElementById('reference');
+        const indicesSelect = document.getElementById('indices');
+        const levelInput = document.getElementById('index-level');
+        const percentageRadios = document.querySelectorAll('input[name="percentage"]');
+        const calcNote = document.getElementById('calc-note');
+
+        // Radio button handling
+        percentageRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Update visual selection
+                document.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
+                this.closest('.radio-option').classList.add('selected');
+
+                // Calculate and fill
+                const percentage = parseFloat(this.value);
+                const selectedIndex = indicesSelect.value;
+                
+                if (selectedIndex && currentLevels[selectedIndex]) {
+                    const currentLevel = currentLevels[selectedIndex];
+                    const calculatedLevel = currentLevel * (1 + percentage / 100);
+                    levelInput.value = calculatedLevel.toFixed(2);
+                    
+                    calcNote.textContent = `Calculated: ${currentLevel.toLocaleString()} × ${percentage}% = ${calculatedLevel.toFixed(2)}`;
+                    calcNote.classList.add('show');
+                } else {
+                    calcNote.textContent = 'Please select an index first to calculate the level';
+                    calcNote.classList.add('show');
+                }
+            });
+        });
+
+        // Clear radio selection when manual input is used
+        levelInput.addEventListener('input', function() {
+            percentageRadios.forEach(radio => {
+                radio.checked = false;
+                radio.closest('.radio-option').classList.remove('selected');
+            });
+            calcNote.classList.remove('show');
+        });
+
+        // Update calculation when index changes
+        indicesSelect.addEventListener('change', function() {
+            const selectedRadio = document.querySelector('input[name="percentage"]:checked');
+            if (selectedRadio && levelInput.value) {
+                const percentage = parseFloat(selectedRadio.value);
+                const selectedIndex = this.value;
+                
+                if (selectedIndex && currentLevels[selectedIndex]) {
+                    const currentLevel = currentLevels[selectedIndex];
+                    const calculatedLevel = currentLevel * (1 + percentage / 100);
+                    levelInput.value = calculatedLevel.toFixed(2);
+                    
+                    calcNote.textContent = `Calculated: ${currentLevel.toLocaleString()} × ${percentage}% = ${calculatedLevel.toFixed(2)}`;
+                    calcNote.classList.add('show');
+                }
+            }
+        });
+
+        // Validation
+        function validateForm() {
+            let isValid = true;
+            const globalError = document.getElementById('global-error');
+            globalError.classList.remove('show');
+            globalError.textContent = '';
+
+            // Reset errors
+            document.querySelectorAll('.form-group').forEach(group => group.classList.remove('error'));
+            document.querySelectorAll('.error-message').forEach(msg => msg.classList.remove('show'));
+
+            // Validate PIA
+            if (!piaSelect.value) {
+                document.getElementById('pia-group').classList.add('error');
+                document.getElementById('pia-error').classList.add('show');
+                isValid = false;
+            }
+
+            // Validate Reference
+            if (!referenceInput.value.trim()) {
+                document.getElementById('reference-group').classList.add('error');
+                document.getElementById('reference-error').classList.add('show');
+                isValid = false;
+            }
+
+            // Validate Index
+            if (!indicesSelect.value) {
+                document.getElementById('indices-group').classList.add('error');
+                document.getElementById('indices-error').classList.add('show');
+                isValid = false;
+            }
+
+            // Validate Level
+            const levelValue = levelInput.value.trim();
+            if (!levelValue) {
+                document.getElementById('level-group').classList.add('error');
+                document.getElementById('level-error').textContent = 'Please enter a level or select a percentage';
+                document.getElementById('level-error').classList.add('show');
+                isValid = false;
+            } else if (isNaN(levelValue) || parseFloat(levelValue) <= 0) {
+                document.getElementById('level-group').classList.add('error');
+                document.getElementById('level-error').textContent = 'Please enter a valid positive number';
+                document.getElementById('level-error').classList.add('show');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (!validateForm()) {
+                document.getElementById('global-error').textContent = 'Please correct the errors above before submitting';
+                document.getElementById('global-error').classList.add('show');
+                return;
+            }
+
+            // Create entry
+            const entry = {
+                id: Date.now(),
+                pia: piaSelect.value,
+                reference: referenceInput.value.trim(),
+                index: indicesSelect.value,
+                level: parseFloat(levelInput.value),
+                currentLevel: currentLevels[indicesSelect.value] || 0,
+                timestamp: new Date().toISOString()
+            };
+
+            // Add to entries
+            entries.push(entry);
+            
+            // Save to localStorage
+            localStorage.setItem('equityEntries', JSON.stringify(entries));
+
+            // Show success
+            document.getElementById('success-message').textContent = 'Entry added successfully!';
+            document.getElementById('success-message').classList.add('show');
+            setTimeout(() => {
+                document.getElementById('success-message').classList.remove('show');
+            }, 3000);
+
+            // Clear form
+            form.reset();
+            document.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
+            calcNote.classList.remove('show');
+
+            // Refresh table
+            renderTable();
+        });
+
+        // Clear button
+        document.getElementById('clear-btn').addEventListener('click', function() {
+            form.reset();
+            document.querySelectorAll('.form-group').forEach(group => group.classList.remove('error'));
+            document.querySelectorAll('.error-message').forEach(msg => msg.classList.remove('show'));
+            document.getElementById('global-error').classList.remove('show');
+            document.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
+            calcNote.classList.remove('show');
+        });
+
+        // Render table
+        function renderTable() {
+            const container = document.getElementById('table-container');
+            const count = document.getElementById('entry-count');
+
+            count.textContent = `(${entries.length} entries)`;
+
+            if (entries.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                        </svg>
+                        <p>No entries yet. Fill out the form above to get started.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort by PIA name
+            const sortedEntries = [...entries].sort((a, b) => a.pia.localeCompare(b.pia));
+
+            const tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>PIA Name</th>
+                            <th>Reference</th>
+                            <th>Index</th>
+                            <th>Watch Level</th>
+                            <th>Current Level</th>
+                            <th>% Distance</th>
+                            <th>Added</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sortedEntries.map(entry => {
+                            const piaClass = 'pia-' + entry.pia.toLowerCase();
+                            const percentDistance = ((entry.level - entry.currentLevel) / entry.currentLevel * 100).toFixed(2);
+                            const distanceClass = parseFloat(percentDistance) >= 0 ? 'level-positive' : 'level-negative';
+                            const date = new Date(entry.timestamp).toLocaleDateString();
+                            
+                            return `
+                                <tr>
+                                    <td><span class="pia-tag ${piaClass}">${entry.pia}</span></td>
+                                    <td>${escapeHtml(entry.reference)}</td>
+                                    <td><span class="index-tag">${entry.index}</span></td>
+                                    <td><strong>${entry.level.toLocaleString()}</strong></td>
+                                    <td>${entry.currentLevel.toLocaleString()}</td>
+                                    <td class="${distanceClass}">${percentDistance > 0 ? '+' : ''}${percentDistance}%</td>
+                                    <td>${date}</td>
+                                    <td><button class="delete-btn" onclick="deleteEntry(${entry.id})">Delete</button></td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = tableHTML;
+        }
+
+        // Delete entry
+        window.deleteEntry = function(id) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                entries = entries.filter(e => e.id !== id);
+                localStorage.setItem('equityEntries', JSON.stringify(entries));
+                renderTable();
+            }
+        };
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize
+        fetchIndexLevels();
+        renderTable();
+
+        // Refresh levels every 5 minutes
+        setInterval(fetchIndexLevels, 300000);
+    </script>
+</body>
+</html>
