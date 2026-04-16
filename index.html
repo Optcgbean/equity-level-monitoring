@@ -433,6 +433,7 @@
         <header>
             <h1>📊 Equity Level Monitoring</h1>
             <p>Track index watch levels by PIA</p>
+            <div style="color: #666; font-size: 0.75rem; margin-top: 0.5rem;">v1.1 - Cache: <span id="cache-buster">2025-04-16-2300</span></div>
             <div class="status-bar">
                 <span class="connected">Connected to Airtable</span>
                 <span id="entry-stats">Loading entries...</span>
@@ -929,16 +930,21 @@
             let correction = null;
             const selectedRadio = document.querySelector('input[name="percentage"]:checked');
             
+            console.log('Form submission - selectedRadio:', selectedRadio);
+            
             if (selectedRadio) {
                 // User selected radio button
                 correction = parseFloat(selectedRadio.value);
+                console.log('Using radio value:', correction);
             } else {
                 // User entered manual level - calculate %
                 const currentLevel = currentLevels[indicesSelect.value];
                 const watchLevel = parseFloat(levelInput.value);
+                console.log('Manual entry - currentLevel:', currentLevel, 'watchLevel:', watchLevel);
                 if (currentLevel && watchLevel) {
                     correction = ((watchLevel - currentLevel) / currentLevel * 100);
                     correction = Math.round(correction * 100) / 100; // Round to 2 decimals
+                    console.log('Calculated correction:', correction);
                 }
             }
 
