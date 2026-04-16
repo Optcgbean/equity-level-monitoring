@@ -390,6 +390,8 @@
         .pia-Tina { background: rgba(255, 20, 147, 0.2); color: #ff1493; }
         .pia-Sharon { background: rgba(0, 191, 255, 0.2); color: #00bfff; }
         .pia-Terry { background: rgba(255, 215, 0, 0.2); color: #ffd700; }
+        .pia-Jacqueline { background: rgba(255, 140, 0, 0.2); color: #ff8c00; }
+        .pia-Dawn { background: rgba(70, 130, 180, 0.2); color: #4682b4; }
 
         .index-tag {
             font-weight: 600;
@@ -536,6 +538,8 @@
                             <option value="Tina">Tina</option>
                             <option value="Sharon">Sharon</option>
                             <option value="Terry">Terry</option>
+                            <option value="Jacqueline">Jacqueline</option>
+                            <option value="Dawn">Dawn</option>
                         </select>
                         <div class="error-message" id="pia-error">Please select a PIA Name</div>
                     </div>
@@ -616,6 +620,8 @@
                         <option value="Tina">Tina</option>
                         <option value="Sharon">Sharon</option>
                         <option value="Terry">Terry</option>
+                        <option value="Jacqueline">Jacqueline</option>
+                        <option value="Dawn">Dawn</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -660,6 +666,8 @@
                     <option value="Tina">Tina</option>
                     <option value="Sharon">Sharon</option>
                     <option value="Terry">Terry</option>
+                    <option value="Jacqueline">Jacqueline</option>
+                    <option value="Dawn">Dawn</option>
                 </select>
             </div>
             
@@ -1321,6 +1329,7 @@
                     document.getElementById('sp500-level').textContent = currentLevels['S&P500'].toLocaleString('en-US', {maximumFractionDigits: 2});
                     document.getElementById('sp500-time').textContent = new Date().toLocaleString();
                 }
+
             } catch (e) {
                 document.getElementById('sp500-level').textContent = currentLevels['S&P500'].toLocaleString();
                 document.getElementById('sp500-time').textContent = 'Using cached data';
