@@ -498,7 +498,7 @@
         <section class="current-levels" id="current-levels">
             <div class="level-card">
                 <h3>MSCI World</h3>
-                <div class="level-value" id="msci-world-level">3,562.35</div>
+                <div class="level-value" id="msci-world-level">4,595.65</div>
                 <div class="level-time" id="msci-world-time">Apr 17, 2026</div>
             </div>
             <div class="level-card">
@@ -692,8 +692,10 @@
         const AIRTABLE_API_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}`;
 
         // Current index levels - as of April 17, 2026
+        // MSCI World: Previous Close 4,595.65
+        // S&P 500: 7,041.28
         let currentLevels = {
-            'MSCI World': 3562.35,
+            'MSCI World': 4595.65,
             'S&P500': 7041.28
         };
 
