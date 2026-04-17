@@ -488,7 +488,7 @@
         <header>
             <h1>📊 Equity Level Monitoring</h1>
             <p>Track index watch levels by PIA</p>
-            <div style="color: #666; font-size: 0.75rem; margin-top: 0.5rem;">v1.2 - Cache: <span id="cache-buster">2025-04-17-0800</span></div>
+            <div style="color: #666; font-size: 0.75rem; margin-top: 0.5rem;">v1.2 - Last Updated: April 17, 2026</div>
             <div class="status-bar">
                 <span class="connected">Connected to Airtable</span>
                 <span id="entry-stats">Loading entries...</span>
@@ -498,13 +498,13 @@
         <section class="current-levels" id="current-levels">
             <div class="level-card">
                 <h3>MSCI World</h3>
-                <div class="level-value" id="msci-world-level">--</div>
-                <div class="level-time" id="msci-world-time">Loading...</div>
+                <div class="level-value" id="msci-world-level">3,562.35</div>
+                <div class="level-time" id="msci-world-time">Apr 17, 2026</div>
             </div>
             <div class="level-card">
                 <h3>S&P 500</h3>
-                <div class="level-value" id="sp500-level">--</div>
-                <div class="level-time" id="sp500-time">Loading...</div>
+                <div class="level-value" id="sp500-level">7,041.28</div>
+                <div class="level-time" id="sp500-time">Apr 17, 2026</div>
             </div>
         </section>
 
@@ -691,10 +691,10 @@
         const AIRTABLE_TABLE_NAME = 'Table%201';
         const AIRTABLE_API_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}`;
 
-        // Current index levels - updated via live API
+        // Current index levels - as of April 17, 2026
         let currentLevels = {
-            'MSCI World': 0,
-            'S&P500': 0
+            'MSCI World': 3562.35,
+            'S&P500': 7041.28
         };
 
         // Store entries
@@ -1299,71 +1299,11 @@
         window.saveEdit = saveEdit;
 
         // ============================================
-        // FETCH INDEX LEVELS (Yahoo Finance)
-        // ============================================
-
-        async function fetchIndexLevels() {
-            let sp500Updated = false;
-            let msciWorldUpdated = false;
-            
-            // Fetch S&P 500
-            try {
-                const sp500Response = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?interval=1d&range=1d');
-                const sp500Data = await sp500Response.json();
-                if (sp500Data.chart && sp500Data.chart.result && sp500Data.chart.result[0]) {
-                    const meta = sp500Data.chart.result[0].meta;
-                    const price = meta.regularMarketPrice || meta.previousClose;
-                    if (price) {
-                        currentLevels['S&P500'] = price;
-                        document.getElementById('sp500-level').textContent = price.toLocaleString('en-US', {maximumFractionDigits: 2});
-                        document.getElementById('sp500-time').textContent = new Date().toLocaleString();
-                        sp500Updated = true;
-                    }
-                }
-            } catch (e) {
-                console.error('S&P 500 fetch error:', e);
-            }
-
-            if (!sp500Updated) {
-                document.getElementById('sp500-level').textContent = currentLevels['S&P500'] ? currentLevels['S&P500'].toLocaleString() : '--';
-                document.getElementById('sp500-time').textContent = 'Using cached data';
-            }
-
-            // Fetch MSCI World (using URTH as proxy)
-            try {
-                const msciResponse = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/URTH?interval=1d&range=1d');
-                const msciData = await msciResponse.json();
-                if (msciData.chart && msciData.chart.result && msciData.chart.result[0]) {
-                    const meta = msciData.chart.result[0].meta;
-                    const price = meta.regularMarketPrice || meta.previousClose;
-                    if (price) {
-                        currentLevels['MSCI World'] = price;
-                        document.getElementById('msci-world-level').textContent = price.toLocaleString('en-US', {maximumFractionDigits: 2});
-                        document.getElementById('msci-world-time').textContent = new Date().toLocaleString();
-                        msciWorldUpdated = true;
-                    }
-                }
-            } catch (e) {
-                console.error('MSCI World fetch error:', e);
-            }
-
-            if (!msciWorldUpdated) {
-                document.getElementById('msci-world-level').textContent = currentLevels['MSCI World'] ? currentLevels['MSCI World'].toLocaleString() : '--';
-                document.getElementById('msci-world-time').textContent = 'Using cached data';
-            }
-            
-            return { sp500Updated, msciWorldUpdated };
-        }
-
-        // ============================================
         // INITIALIZE
         // ============================================
 
         async function init() {
-            // Fetch index levels first
-            await fetchIndexLevels();
-            
-            // Then fetch entries from Airtable
+            // Fetch entries from Airtable
             await fetchEntries();
         }
 
