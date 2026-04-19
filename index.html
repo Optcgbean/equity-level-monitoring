@@ -374,25 +374,6 @@
             background: rgba(0, 212, 255, 0.05);
         }
 
-        .pia-tag {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        .pia-Bosco { background: rgba(0, 212, 255, 0.2); color: #00d4ff; }
-        .pia-Gloria { background: rgba(255, 105, 180, 0.2); color: #ff69b4; }
-        .pia-Christie { background: rgba(255, 165, 0, 0.2); color: #ffa500; }
-        .pia-Rebecca { background: rgba(138, 43, 226, 0.2); color: #8a2be2; }
-        .pia-Joseph { background: rgba(50, 205, 50, 0.2); color: #32cd32; }
-        .pia-Tina { background: rgba(255, 20, 147, 0.2); color: #ff1493; }
-        .pia-Sharon { background: rgba(0, 191, 255, 0.2); color: #00bfff; }
-        .pia-Terry { background: rgba(255, 215, 0, 0.2); color: #ffd700; }
-        .pia-Jacqueline { background: rgba(255, 140, 0, 0.2); color: #ff8c00; }
-        .pia-Dawn { background: rgba(70, 130, 180, 0.2); color: #4682b4; }
-
         .index-tag {
             font-weight: 600;
         }
@@ -487,8 +468,8 @@
     <div class="container">
         <header>
             <h1>📊 Equity Level Monitoring</h1>
-            <p>Track index watch levels by PIA</p>
-            <div style="color: #666; font-size: 0.75rem; margin-top: 0.5rem;">v1.2 - Last Updated: April 17, 2026</div>
+            <p>Track index watch levels</p>
+            <div style="color: #666; font-size: 0.75rem; margin-top: 0.5rem;">v1.3 - Last Updated: April 19, 2026</div>
             <div class="status-bar">
                 <span class="connected">Connected to Airtable</span>
                 <span id="entry-stats">Loading entries...</span>
@@ -642,22 +623,6 @@
             <input type="hidden" id="edit-id">
             
             <div class="form-group" style="margin-bottom: 1rem;">
-                <label>PIA Name</label>
-                <select id="edit-pia" style="width: 100%; background: #0f0f18; border: 1px solid #3a3a4a; border-radius: 8px; padding: 0.75rem; color: #fff;">
-                    <option value="Bosco">Bosco</option>
-                    <option value="Gloria">Gloria</option>
-                    <option value="Christie">Christie</option>
-                    <option value="Rebecca">Rebecca</option>
-                    <option value="Joseph">Joseph</option>
-                    <option value="Tina">Tina</option>
-                    <option value="Sharon">Sharon</option>
-                    <option value="Terry">Terry</option>
-                    <option value="Jacqueline">Jacqueline</option>
-                    <option value="Dawn">Dawn</option>
-                </select>
-            </div>
-            
-            <div class="form-group" style="margin-bottom: 1rem;">
                 <label>Reference</label>
                 <input type="text" id="edit-reference" style="width: 100%; background: #0f0f18; border: 1px solid #3a3a4a; border-radius: 8px; padding: 0.75rem; color: #fff;">
             </div>
@@ -709,8 +674,7 @@
 
         // Clear all filters
         window.clearFilters = function() {
-            filterState = { pia: '', index: '' };
-            document.getElementById('filter-pia').value = '';
+            filterState = { index: '' };
             document.getElementById('filter-index').value = '';
             renderTable();
         };
@@ -718,16 +682,12 @@
         // Filter entries based on current filter state
         function filterEntries(entriesToFilter) {
             return entriesToFilter.filter(entry => {
-                // PIA filter
-                if (filterState.pia && entry.pia !== filterState.pia) {
-                    return false;
-                }
                 // Index filter
                 if (filterState.index && entry.index !== filterState.index) {
                     return false;
                 }
                 return true;
-            }).sort((a, b) => a.pia.localeCompare(b.pia)); // Always sort by PIA name after filtering
+            });
         }
 
         // ============================================
@@ -785,7 +745,6 @@
                     },
                     body: JSON.stringify({
                         fields: {
-                            'PIA': entry.pia,
                             'Reference': entry.reference,
                             'Index': entry.index,
                             'Watch Level': entry.level,
@@ -804,7 +763,6 @@
                 // Add to local entries array
                 entries.push({
                     id: data.id,
-                    pia: data.fields.PIA,
                     reference: data.fields.Reference,
                     index: data.fields.Index,
                     level: data.fields['Watch Level'],
@@ -813,15 +771,12 @@
                     timestamp: data.fields.Timestamp
                 });
 
-                // Sort by PIA
-                entries.sort((a, b) => a.pia.localeCompare(b.pia));
-
                 // Refresh table
                 renderTable();
                 updateStats();
 
                 // Clear filters to show the new entry
-                if (filterState.pia || filterState.index) {
+                if (filterState.index) {
                     clearFilters();
                 }
 
@@ -924,7 +879,6 @@
         // Save edited entry to Airtable
         window.saveEdit = async function() {
             const recordId = document.getElementById('edit-id').value;
-            const pia = document.getElementById('edit-pia').value;
             const reference = document.getElementById('edit-reference').value.trim();
             const index = document.getElementById('edit-index').value;
             const level = parseFloat(document.getElementById('edit-level').value);
@@ -951,7 +905,6 @@
                     },
                     body: JSON.stringify({
                         fields: {
-                            'PIA': pia,
                             'Reference': reference,
                             'Index': index,
                             'Watch Level': level,
@@ -972,7 +925,6 @@
                 if (entryIndex !== -1) {
                     entries[entryIndex] = {
                         id: data.id,
-                        pia: data.fields.PIA,
                         reference: data.fields.Reference,
                         index: data.fields.Index,
                         level: data.fields['Watch Level'],
@@ -1012,7 +964,7 @@
             const filteredCount = filterEntries(entries).length;
             const totalCount = entries.length;
             
-            if (filterState.pia || filterState.index) {
+            if (filterState.index) {
                 document.getElementById('entry-count').textContent = `(${filteredCount} of ${totalCount} entries)`;
             } else {
                 document.getElementById('entry-count').textContent = `(${totalCount} entries)`;
@@ -1058,7 +1010,6 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>PIA Name</th>
                             <th>Reference</th>
                             <th>Index</th>
                             <th>% Correction</th>
@@ -1071,7 +1022,6 @@
                     </thead>
                     <tbody>
                         ${filteredEntries.map(entry => {
-                            const piaClass = 'pia-' + entry.pia;
                             // Use LIVE current level for dynamic % distance calculation
                             const liveCurrentLevel = currentLevels[entry.index] || entry.currentLevel || 0;
                             const percentDistance = liveCurrentLevel && entry.level ? ((entry.level - liveCurrentLevel) / liveCurrentLevel * 100).toFixed(2) : '0.00';
@@ -1080,7 +1030,6 @@
                             
                             return `
                                 <tr>
-                                    <td><span class="pia-tag ${piaClass}">${entry.pia}</span></td>
                                     <td>${escapeHtml(entry.reference)}</td>
                                     <td><span class="index-tag">${entry.index}</span></td>
                                     <td><strong>${entry.correction !== null && entry.correction !== undefined ? entry.correction + '%' : 'N/A'}</strong></td>
@@ -1119,7 +1068,6 @@
         // ============================================
 
         const form = document.getElementById('monitoring-form');
-        const piaSelect = document.getElementById('pia-name');
         const referenceInput = document.getElementById('reference');
         const indicesSelect = document.getElementById('indices');
         const levelInput = document.getElementById('index-level');
@@ -1201,12 +1149,6 @@
             document.querySelectorAll('.form-group').forEach(group => group.classList.remove('error'));
             document.querySelectorAll('.error-message').forEach(msg => msg.classList.remove('show'));
 
-            if (!piaSelect.value) {
-                document.getElementById('pia-group').classList.add('error');
-                document.getElementById('pia-error').classList.add('show');
-                isValid = false;
-            }
-
             if (!referenceInput.value.trim()) {
                 document.getElementById('reference-group').classList.add('error');
                 document.getElementById('reference-error').classList.add('show');
@@ -1267,7 +1209,6 @@
             }
 
             const entry = {
-                pia: piaSelect.value,
                 reference: referenceInput.value.trim(),
                 index: indicesSelect.value,
                 level: parseFloat(levelInput.value),
@@ -1312,4 +1253,15 @@
         init();
     </script>
 </body>
-</html>
+</html> app
+        init();
+    </script>
+</body>
+</html>l>t();
+    </script>
+</body>
+</html> app
+        init();
+    </script>
+</body>
+</html>l>
