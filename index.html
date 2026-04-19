@@ -455,6 +455,124 @@
             display: block;
         }
 
+        /* Alerts Section */
+        .alerts-section {
+            margin-bottom: 2rem;
+        }
+
+        .alerts-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .alerts-header.high {
+            color: #ff4757;
+        }
+
+        .alerts-header.normal {
+            color: #ffa500;
+        }
+
+        .alert-count {
+            background: #ff4757;
+            color: #fff;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+
+        .alert-card {
+            background: #151520;
+            border: 1px solid #2a2a3a;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .alert-card.high {
+            border-left-color: #ff4757;
+            background: rgba(255, 71, 87, 0.05);
+        }
+
+        .alert-card.normal {
+            border-left-color: #ffa500;
+            background: rgba(255, 165, 0, 0.05);
+        }
+
+        .alert-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .alert-type {
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .alert-type.high { color: #ff4757; }
+        .alert-type.normal { color: #ffa500; }
+
+        .alert-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .alert-badge.high {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+
+        .alert-badge.normal {
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+        }
+
+        .alert-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .alert-detail {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .alert-detail-label {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .alert-detail-value {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .alert-detail-value.level-triggered {
+            color: #ff4757;
+            font-weight: 700;
+        }
+
+        .alert-detail-value.level-near {
+            color: #ffa500;
+            font-weight: 600;
+        }
+
         @media (max-width: 768px) {
             body { padding: 1rem; }
             header h1 { font-size: 1.8rem; }
@@ -475,6 +593,17 @@
                 <span id="entry-stats">Loading entries...</span>
             </div>
         </header>
+
+        <!-- Alerts Section - Hidden by default, shown when alerts exist -->
+        <section class="alerts-section" id="alerts-section" style="display: none;">
+            <div class="alerts-header" id="alerts-header">
+                🔔 Current Alerts
+                <span class="alert-count" id="alert-count">0</span>
+            </div>
+            <div id="alerts-container">
+                <!-- Alerts will be dynamically inserted here -->
+            </div>
+        </section>
 
         <section class="current-levels" id="current-levels">
             <div class="level-card">
@@ -712,6 +841,116 @@
         }
 
         // ============================================
+        // ALERTS FUNCTION
+        // ============================================
+
+        // Check entries and generate alerts
+        function checkAlerts() {
+            const alertsSection = document.getElementById('alerts-section');
+            const alertsContainer = document.getElementById('alerts-container');
+            const alertsHeader = document.getElementById('alerts-header');
+            const alertCount = document.getElementById('alert-count');
+            
+            const alerts = [];
+            
+            entries.forEach(entry => {
+                const currentLevel = currentLevels[entry.index] || 0;
+                const watchLevel = entry.level || 0;
+                
+                if (currentLevel <= 0 || watchLevel <= 0) return;
+                
+                // Calculate percentage distance
+                const percentDistance = ((currentLevel - watchLevel) / watchLevel * 100);
+                
+                // HIGH ALERT: Current index <= watch level
+                if (currentLevel <= watchLevel) {
+                    alerts.push({
+                        type: 'high',
+                        entry: entry,
+                        currentLevel: currentLevel,
+                        percentDistance: percentDistance,
+                        message: 'Index has reached or fallen below watch level'
+                    });
+                }
+                // NORMAL ALERT: Within 2% of watch level (but above it)
+                else if (percentDistance <= 2 && percentDistance > 0) {
+                    alerts.push({
+                        type: 'normal',
+                        entry: entry,
+                        currentLevel: currentLevel,
+                        percentDistance: percentDistance,
+                        message: 'Index is within 2% of watch level'
+                    });
+                }
+            });
+            
+            // Sort alerts: high first, then by percentage distance
+            alerts.sort((a, b) => {
+                if (a.type === 'high' && b.type !== 'high') return -1;
+                if (a.type !== 'high' && b.type === 'high') return 1;
+                return a.percentDistance - b.percentDistance;
+            });
+            
+            if (alerts.length === 0) {
+                alertsSection.style.display = 'none';
+                return;
+            }
+            
+            // Show alerts section
+            alertsSection.style.display = 'block';
+            
+            // Update header style based on highest alert type
+            const hasHighAlert = alerts.some(a => a.type === 'high');
+            alertsHeader.className = 'alerts-header ' + (hasHighAlert ? 'high' : 'normal');
+            alertCount.textContent = alerts.length;
+            
+            // Render alerts
+            alertsContainer.innerHTML = alerts.map(alert => {
+                const entry = alert.entry;
+                const date = entry.timestamp ? new Date(entry.timestamp).toLocaleDateString() : 'N/A';
+                
+                return `
+                    <div class="alert-card ${alert.type}">
+                        <div class="alert-card-header">
+                            <span class="alert-type ${alert.type}">${alert.type === 'high' ? '🔴 HIGH ALERT' : '🟡 NORMAL ALERT'}</span>
+                            <span class="alert-badge ${alert.type}">${alert.type === 'high' ? 'TRIGGERED' : 'NEAR LEVEL'}</span>
+                        </div>
+                        <div class="alert-details">
+                            <div class="alert-detail">
+                                <span class="alert-detail-label">Name</span>
+                                <span class="alert-detail-value"><strong>${entry.name || 'N/A'}</strong></span>
+                            </div>
+                            <div class="alert-detail">
+                                <span class="alert-detail-label">Index</span>
+                                <span class="alert-detail-value">${entry.index}</span>
+                            </div>
+                            <div class="alert-detail">
+                                <span class="alert-detail-label">Reference</span>
+                                <span class="alert-detail-value">${escapeHtml(entry.reference)}</span>
+                            </div>
+                            <div class="alert-detail">
+                                <span class="alert-detail-label">Watch Level</span>
+                                <span class="alert-detail-value ${alert.type === 'high' ? 'level-triggered' : 'level-near'}">${entry.level.toLocaleString()}</span>
+                            </div>
+                            <div class="alert-detail">
+                                <span class="alert-detail-label">Current Level</span>
+                                <span class="alert-detail-value ${alert.type === 'high' ? 'level-triggered' : 'level-near'}">${alert.currentLevel.toLocaleString()}</span>
+                            </div>
+                            <div class="alert-detail">
+                                <span class="alert-detail-label">Distance</span>
+                                <span class="alert-detail-value ${alert.type === 'high' ? 'level-triggered' : 'level-near'}">${alert.percentDistance > 0 ? '+' : ''}${alert.percentDistance.toFixed(2)}%</span>
+                            </div>
+                            <div class="alert-detail">
+                                <span class="alert-detail-label">Added</span>
+                                <span class="alert-detail-value">${date}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================
         // AIRTABLE API FUNCTIONS
         // ============================================
 
@@ -746,6 +985,7 @@
 
                 renderTable();
                 updateStats();
+                checkAlerts(); // Check for alerts after fetching entries
                 return entries;
             } catch (error) {
                 console.error('Error fetching entries:', error);
@@ -1159,6 +1399,154 @@
         });
 
         // Filter change handlers
+        const filterNameSelect = document.getElementById('filter-name');
+        const filterIndexSelect = document.getElementById('filter-index');
+        
+        if (filterNameSelect) {
+            filterNameSelect.addEventListener('change', function() {
+                filterState.name = this.value;
+                renderTable();
+            });
+        }
+        
+        if (filterIndexSelect) {
+            filterIndexSelect.addEventListener('change', function() {
+                filterState.index = this.value;
+                renderTable();
+            });
+        }
+
+        // Validation
+        function validateForm() {
+            let isValid = true;
+            document.getElementById('global-error').classList.remove('show');
+            document.querySelectorAll('.form-group').forEach(group => group.classList.remove('error'));
+            document.querySelectorAll('.error-message').forEach(msg => msg.classList.remove('show'));
+
+            if (!nameSelect.value) {
+                document.getElementById('name-group').classList.add('error');
+                document.getElementById('name-error').classList.add('show');
+                isValid = false;
+            }
+
+            if (!referenceInput.value.trim()) {
+                document.getElementById('reference-group').classList.add('error');
+                document.getElementById('reference-error').classList.add('show');
+                isValid = false;
+            }
+
+            if (!indicesSelect.value) {
+                document.getElementById('indices-group').classList.add('error');
+                document.getElementById('indices-error').classList.add('show');
+                isValid = false;
+            }
+
+            const levelValue = levelInput.value.trim();
+            if (!levelValue) {
+                document.getElementById('level-group').classList.add('error');
+                document.getElementById('level-error').textContent = 'Please enter a level or select a percentage';
+                document.getElementById('level-error').classList.add('show');
+                isValid = false;
+            } else if (isNaN(levelValue) || parseFloat(levelValue) <= 0) {
+                document.getElementById('level-group').classList.add('error');
+                document.getElementById('level-error').textContent = 'Please enter a valid positive number';
+                document.getElementById('level-error').classList.add('show');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // Form submission
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!validateForm()) {
+                showGlobalError('Please correct the errors above before submitting');
+                return;
+            }
+
+            // Calculate correction %
+            let correction = null;
+            const selectedRadio = document.querySelector('input[name="percentage"]:checked');
+            
+            console.log('Form submission - selectedRadio:', selectedRadio);
+            
+            if (selectedRadio) {
+                // User selected radio button
+                correction = parseFloat(selectedRadio.value);
+                console.log('Using radio value:', correction);
+            } else {
+                // User entered manual level - calculate %
+                const currentLevel = currentLevels[indicesSelect.value];
+                const watchLevel = parseFloat(levelInput.value);
+                console.log('Manual entry - currentLevel:', currentLevel, 'watchLevel:', watchLevel);
+                if (currentLevel && watchLevel) {
+                    correction = ((watchLevel - currentLevel) / currentLevel * 100);
+                    correction = Math.round(correction * 100) / 100; // Round to 2 decimals
+                    console.log('Calculated correction:', correction);
+                }
+            }
+
+            const entry = {
+                name: nameSelect.value,
+                reference: referenceInput.value.trim(),
+                index: indicesSelect.value,
+                level: parseFloat(levelInput.value),
+                currentLevel: currentLevels[indicesSelect.value] || 0,
+                correction: correction
+            };
+
+            try {
+                await createEntry(entry);
+            } catch (error) {
+                // Error already handled in createEntry
+            }
+        });
+
+        // Clear button
+        document.getElementById('clear-btn').addEventListener('click', function() {
+            form.reset();
+            document.querySelectorAll('.form-group').forEach(group => group.classList.remove('error'));
+            document.querySelectorAll('.error-message').forEach(msg => msg.classList.remove('show'));
+            document.getElementById('global-error').classList.remove('show');
+            document.querySelectorAll('.radio-option').forEach(opt => opt.classList.remove('selected'));
+            calcNote.classList.remove('show');
+        });
+
+        // Make functions globally accessible
+        window.deleteEntry = deleteEntry;
+        window.executeAction = executeAction;
+        window.openEditModal = openEditModal;
+        window.closeEditModal = closeEditModal;
+        window.saveEdit = saveEdit;
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+
+        async function init() {
+            // Fetch entries from Airtable
+            await fetchEntries();
+        }
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html> app
+        init();
+    </script>
+</body>
+</html>l>t();
+    </script>
+</body>
+</html> app
+        init();
+    </script>
+</body>
+</html>l>// Deployed: Sun Apr 19 07:03:56 PM CST 2026
+lter change handlers
         const filterNameSelect = document.getElementById('filter-name');
         const filterIndexSelect = document.getElementById('filter-index');
         
