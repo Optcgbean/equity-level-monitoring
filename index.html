@@ -497,10 +497,10 @@
 
             <form id="monitoring-form">
                 <div class="form-grid">
-                    <div class="form-group" id="pia-group">
-                        <label>PIA Name <span class="required">*</span></label>
-                        <select id="pia-name" required>
-                            <option value="">Select PIA...</option>
+                    <div class="form-group" id="name-group">
+                        <label>Name <span class="required">*</span></label>
+                        <select id="name" required>
+                            <option value="">Select Name...</option>
                             <option value="Bosco">Bosco</option>
                             <option value="Gloria">Gloria</option>
                             <option value="Christie">Christie</option>
@@ -512,7 +512,7 @@
                             <option value="Jacqueline">Jacqueline</option>
                             <option value="Dawn">Dawn</option>
                         </select>
-                        <div class="error-message" id="pia-error">Please select a PIA Name</div>
+                        <div class="error-message" id="name-error">Please select a Name</div>
                     </div>
 
                     <div class="form-group" id="reference-group">
@@ -578,8 +578,8 @@
             </h2>
             <div class="sort-controls">
                 <div class="filter-group">
-                    <label>Filter by PIA:</label>
-                    <select id="filter-pia">
+                    <label>Filter by Name:</label>
+                    <select id="filter-name">
                         <option value="">All</option>
                         <option value="Bosco">Bosco</option>
                         <option value="Gloria">Gloria</option>
@@ -621,6 +621,22 @@
         <div style="background: #151520; border: 1px solid #2a2a3a; border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
             <h2 style="margin-bottom: 1.5rem; color: #fff;">✏️ Edit Entry</h2>
             <input type="hidden" id="edit-id">
+            
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label>Name</label>
+                <select id="edit-name" style="width: 100%; background: #0f0f18; border: 1px solid #3a3a4a; border-radius: 8px; padding: 0.75rem; color: #fff;">
+                    <option value="Bosco">Bosco</option>
+                    <option value="Gloria">Gloria</option>
+                    <option value="Christie">Christie</option>
+                    <option value="Rebecca">Rebecca</option>
+                    <option value="Joseph">Joseph</option>
+                    <option value="Tina">Tina</option>
+                    <option value="Sharon">Sharon</option>
+                    <option value="Terry">Terry</option>
+                    <option value="Jacqueline">Jacqueline</option>
+                    <option value="Dawn">Dawn</option>
+                </select>
+            </div>
             
             <div class="form-group" style="margin-bottom: 1rem;">
                 <label>Reference</label>
@@ -668,13 +684,14 @@
 
         // Filter state
         let filterState = {
-            pia: '',
+            name: '',
             index: ''
         };
 
         // Clear all filters
         window.clearFilters = function() {
-            filterState = { index: '' };
+            filterState = { name: '', index: '' };
+            document.getElementById('filter-name').value = '';
             document.getElementById('filter-index').value = '';
             renderTable();
         };
@@ -682,12 +699,16 @@
         // Filter entries based on current filter state
         function filterEntries(entriesToFilter) {
             return entriesToFilter.filter(entry => {
+                // Name filter
+                if (filterState.name && entry.name !== filterState.name) {
+                    return false;
+                }
                 // Index filter
                 if (filterState.index && entry.index !== filterState.index) {
                     return false;
                 }
                 return true;
-            });
+            }).sort((a, b) => a.name.localeCompare(b.name));
         }
 
         // ============================================
@@ -697,7 +718,7 @@
         // Fetch all entries from Airtable
         async function fetchEntries() {
             try {
-                const response = await fetch(`${AIRTABLE_API_URL}?sort%5B0%5D%5Bfield%5D=PIA&sort%5B0%5D%5Bdirection%5D=asc`, {
+                const response = await fetch(`${AIRTABLE_API_URL}?sort%5B0%5D%5Bfield%5D=Name&sort%5B0%5D%5Bdirection%5D=asc`, {
                     headers: {
                         'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
                         'Content-Type': 'application/json'
@@ -711,7 +732,7 @@
                 const data = await response.json();
                 entries = data.records.map(record => ({
                     id: record.id,
-                    pia: record.fields.PIA,
+                    name: record.fields.Name,
                     reference: record.fields.Reference,
                     index: record.fields.Index,
                     level: record.fields['Watch Level'],
@@ -719,6 +740,9 @@
                     currentLevel: record.fields['Current Level'] || currentLevels[record.fields.Index] || 0,
                     timestamp: record.fields.Timestamp
                 }));
+
+                // Sort by Name
+                entries.sort((a, b) => a.name.localeCompare(b.name));
 
                 renderTable();
                 updateStats();
@@ -745,6 +769,7 @@
                     },
                     body: JSON.stringify({
                         fields: {
+                            'Name': entry.name,
                             'Reference': entry.reference,
                             'Index': entry.index,
                             'Watch Level': entry.level,
@@ -763,6 +788,7 @@
                 // Add to local entries array
                 entries.push({
                     id: data.id,
+                    name: data.fields.Name,
                     reference: data.fields.Reference,
                     index: data.fields.Index,
                     level: data.fields['Watch Level'],
@@ -771,12 +797,15 @@
                     timestamp: data.fields.Timestamp
                 });
 
+                // Sort by Name
+                entries.sort((a, b) => a.name.localeCompare(b.name));
+
                 // Refresh table
                 renderTable();
                 updateStats();
 
                 // Clear filters to show the new entry
-                if (filterState.index) {
+                if (filterState.name || filterState.index) {
                     clearFilters();
                 }
 
@@ -862,7 +891,7 @@
             
             // Fill form with current values
             document.getElementById('edit-id').value = recordId;
-            document.getElementById('edit-pia').value = entry.pia;
+            document.getElementById('edit-name').value = entry.name;
             document.getElementById('edit-reference').value = entry.reference || '';
             document.getElementById('edit-index').value = entry.index;
             document.getElementById('edit-level').value = entry.level;
@@ -879,6 +908,7 @@
         // Save edited entry to Airtable
         window.saveEdit = async function() {
             const recordId = document.getElementById('edit-id').value;
+            const name = document.getElementById('edit-name').value;
             const reference = document.getElementById('edit-reference').value.trim();
             const index = document.getElementById('edit-index').value;
             const level = parseFloat(document.getElementById('edit-level').value);
@@ -905,6 +935,7 @@
                     },
                     body: JSON.stringify({
                         fields: {
+                            'Name': name,
                             'Reference': reference,
                             'Index': index,
                             'Watch Level': level,
@@ -925,6 +956,7 @@
                 if (entryIndex !== -1) {
                     entries[entryIndex] = {
                         id: data.id,
+                        name: data.fields.Name,
                         reference: data.fields.Reference,
                         index: data.fields.Index,
                         level: data.fields['Watch Level'],
@@ -964,7 +996,7 @@
             const filteredCount = filterEntries(entries).length;
             const totalCount = entries.length;
             
-            if (filterState.index) {
+            if (filterState.name || filterState.index) {
                 document.getElementById('entry-count').textContent = `(${filteredCount} of ${totalCount} entries)`;
             } else {
                 document.getElementById('entry-count').textContent = `(${totalCount} entries)`;
@@ -1010,6 +1042,7 @@
                 <table>
                     <thead>
                         <tr>
+                            <th>Name</th>
                             <th>Reference</th>
                             <th>Index</th>
                             <th>% Correction</th>
@@ -1030,6 +1063,7 @@
                             
                             return `
                                 <tr>
+                                    <td><strong>${entry.name || 'N/A'}</strong></td>
                                     <td>${escapeHtml(entry.reference)}</td>
                                     <td><span class="index-tag">${entry.index}</span></td>
                                     <td><strong>${entry.correction !== null && entry.correction !== undefined ? entry.correction + '%' : 'N/A'}</strong></td>
@@ -1125,12 +1159,12 @@
         });
 
         // Filter change handlers
-        const filterPiaSelect = document.getElementById('filter-pia');
+        const filterNameSelect = document.getElementById('filter-name');
         const filterIndexSelect = document.getElementById('filter-index');
         
-        if (filterPiaSelect) {
-            filterPiaSelect.addEventListener('change', function() {
-                filterState.pia = this.value;
+        if (filterNameSelect) {
+            filterNameSelect.addEventListener('change', function() {
+                filterState.name = this.value;
                 renderTable();
             });
         }
@@ -1148,6 +1182,12 @@
             document.getElementById('global-error').classList.remove('show');
             document.querySelectorAll('.form-group').forEach(group => group.classList.remove('error'));
             document.querySelectorAll('.error-message').forEach(msg => msg.classList.remove('show'));
+
+            if (!nameSelect.value) {
+                document.getElementById('name-group').classList.add('error');
+                document.getElementById('name-error').classList.add('show');
+                isValid = false;
+            }
 
             if (!referenceInput.value.trim()) {
                 document.getElementById('reference-group').classList.add('error');
@@ -1209,6 +1249,7 @@
             }
 
             const entry = {
+                name: nameSelect.value,
                 reference: referenceInput.value.trim(),
                 index: indicesSelect.value,
                 level: parseFloat(levelInput.value),
