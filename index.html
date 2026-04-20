@@ -289,6 +289,47 @@
             color: #fff;
         }
 
+        .sort-btn {
+            background: #2a2a3a;
+            border: 1px solid #3a3a4a;
+            color: #aaa;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sort-btn:hover {
+            background: #3a3a4a;
+            color: #fff;
+        }
+
+        .sort-btn.active {
+            background: rgba(0, 212, 255, 0.2);
+            border-color: #00d4ff;
+            color: #00d4ff;
+        }
+
+        .sort-btn::after {
+            content: "↕";
+            font-size: 0.75rem;
+            opacity: 0.5;
+        }
+
+        .sort-btn.active.asc::after {
+            content: "↑";
+            opacity: 1;
+        }
+
+        .sort-btn.active.desc::after {
+            content: "↓";
+            opacity: 1;
+        }
+
         .global-error {
             background: rgba(255, 71, 87, 0.1);
             border: 1px solid #ff4757;
@@ -362,6 +403,12 @@
             color: #aaa;
             border-bottom: 1px solid #2a2a3a;
             white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            color: #00d4ff;
         }
 
         td {
@@ -573,12 +620,75 @@
             font-weight: 600;
         }
 
+        /* Alert Filter Radio Buttons */
+        .alert-filter-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .alert-filter-group label {
+            font-size: 0.85rem;
+            color: #888;
+            margin-right: 0.5rem;
+        }
+
+        .alert-radio-option {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            padding: 0.4rem 0.75rem;
+            background: #0f0f18;
+            border: 1px solid #3a3a4a;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        .alert-radio-option:hover {
+            border-color: #00d4ff;
+        }
+
+        .alert-radio-option input[type="radio"] {
+            accent-color: #00d4ff;
+        }
+
+        .alert-radio-option.selected {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+            color: #fff;
+        }
+
+        /* Alert indicator in table */
+        .alert-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .alert-indicator.high {
+            background: #ff4757;
+            box-shadow: 0 0 8px #ff4757;
+        }
+
+        .alert-indicator.normal {
+            background: #ffa500;
+            box-shadow: 0 0 8px #ffa500;
+        }
+
         @media (max-width: 768px) {
             body { padding: 1rem; }
             header h1 { font-size: 1.8rem; }
             .form-grid { grid-template-columns: 1fr; }
             .radio-group { justify-content: center; }
             th, td { padding: 0.75rem 0.5rem; font-size: 0.85rem; }
+            .sort-controls { flex-direction: column; align-items: stretch; }
+            .alert-filter-group { justify-content: center; }
         }
     </style>
 </head>
@@ -587,7 +697,7 @@
         <header>
             <h1>📊 Equity Level Monitoring</h1>
             <p>Track index watch levels</p>
-            <div style="color: #666; font-size: 0.75rem; margin-top: 0.5rem;">v1.3 - Last Updated: April 19, 2026</div>
+            <div style="color: #666; font-size: 0.75rem; margin-top: 0.5rem;">v1.4 - Last Updated: April 20, 2026</div>
             <div class="status-bar">
                 <span class="connected">Connected to Airtable</span>
                 <span id="entry-stats">Loading entries...</span>
@@ -705,6 +815,8 @@
                 📋 Monitoring Entries
                 <span class="data-count" id="entry-count">(0 entries)</span>
             </h2>
+            
+            <!-- Filters -->
             <div class="sort-controls">
                 <div class="filter-group">
                     <label>Filter by Name:</label>
@@ -730,8 +842,32 @@
                         <option value="S&P500">S&P 500</option>
                     </select>
                 </div>
+                <div class="alert-filter-group">
+                    <label>Show Alerts:</label>
+                    <label class="alert-radio-option selected" data-alert="all">
+                        <input type="radio" name="alert-filter" value="all" checked>
+                        <span>All</span>
+                    </label>
+                    <label class="alert-radio-option" data-alert="high">
+                        <input type="radio" name="alert-filter" value="high">
+                        <span>🔴 High Only</span>
+                    </label>
+                    <label class="alert-radio-option" data-alert="normal">
+                        <input type="radio" name="alert-filter" value="normal">
+                        <span>🟡 Normal Only</span>
+                    </label>
+                </div>
                 <button class="filter-btn" id="clear-filters" onclick="clearFilters()">Clear Filters</button>
             </div>
+
+            <!-- Sort Controls -->
+            <div class="sort-controls" style="margin-top: -0.5rem; padding-bottom: 1rem; border-bottom: 1px solid #2a2a3a;">
+                <label style="font-size: 0.85rem; color: #888;">Sort by:</label>
+                <button class="sort-btn active asc" data-sort="name" onclick="setSort('name')">Name</button>
+                <button class="sort-btn" data-sort="index" onclick="setSort('index')">Index</button>
+                <button class="sort-btn" data-sort="distance" onclick="setSort('distance')">% Distance</button>
+            </div>
+
             <div class="table-container" id="table-container">
                 <div class="empty-state">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="64" height="64" style="margin-bottom: 1rem; opacity: 0.5;">
@@ -811,19 +947,59 @@
         // Store entries
         let entries = [];
 
-        // Filter state
+        // Filter and sort state
         let filterState = {
             name: '',
-            index: ''
+            index: '',
+            alertType: 'all' // 'all', 'high', 'normal'
+        };
+
+        let sortState = {
+            field: 'name', // 'name', 'index', 'distance'
+            direction: 'asc' // 'asc', 'desc'
         };
 
         // Clear all filters
         window.clearFilters = function() {
-            filterState = { name: '', index: '' };
+            filterState = { name: '', index: '', alertType: 'all' };
             document.getElementById('filter-name').value = '';
             document.getElementById('filter-index').value = '';
+            document.querySelectorAll('input[name="alert-filter"]').forEach(radio => {
+                radio.checked = radio.value === 'all';
+                radio.closest('.alert-radio-option').classList.toggle('selected', radio.value === 'all');
+            });
             renderTable();
         };
+
+        // Set alert type filter
+        window.setAlertFilter = function(type) {
+            filterState.alertType = type;
+            renderTable();
+        };
+
+        // Set sort field and direction
+        window.setSort = function(field) {
+            if (sortState.field === field) {
+                // Toggle direction
+                sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortState.field = field;
+                sortState.direction = 'asc';
+            }
+            updateSortUI();
+            renderTable();
+        };
+
+        // Update sort UI to show active sort
+        function updateSortUI() {
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                btn.classList.remove('active', 'asc', 'desc');
+                const field = btn.dataset.sort;
+                if (field === sortState.field) {
+                    btn.classList.add('active', sortState.direction);
+                }
+            });
+        }
 
         // Filter entries based on current filter state
         function filterEntries(entriesToFilter) {
@@ -836,8 +1012,63 @@
                 if (filterState.index && entry.index !== filterState.index) {
                     return false;
                 }
+                // Alert type filter
+                if (filterState.alertType !== 'all') {
+                    const currentLevel = currentLevels[entry.index] || 0;
+                    const watchLevel = entry.level || 0;
+                    if (currentLevel <= 0 || watchLevel <= 0) return false;
+                    
+                    const percentDistance = ((currentLevel - watchLevel) / watchLevel * 100);
+                    const isHigh = currentLevel <= watchLevel;
+                    const isNormal = percentDistance <= 2 && percentDistance > 0;
+                    
+                    if (filterState.alertType === 'high' && !isHigh) return false;
+                    if (filterState.alertType === 'normal' && !isNormal) return false;
+                }
                 return true;
-            }).sort((a, b) => a.name.localeCompare(b.name));
+            });
+        }
+
+        // Sort entries
+        function sortEntries(entriesToSort) {
+            return entriesToSort.sort((a, b) => {
+                let comparison = 0;
+                
+                switch (sortState.field) {
+                    case 'name':
+                        comparison = a.name.localeCompare(b.name);
+                        break;
+                    case 'index':
+                        comparison = a.index.localeCompare(b.index);
+                        break;
+                    case 'distance':
+                        const currentLevelA = currentLevels[a.index] || 0;
+                        const currentLevelB = currentLevels[b.index] || 0;
+                        const distanceA = currentLevelA && a.level ? ((a.level - currentLevelA) / currentLevelA * 100) : 0;
+                        const distanceB = currentLevelB && b.level ? ((b.level - currentLevelB) / currentLevelB * 100) : 0;
+                        comparison = distanceA - distanceB;
+                        break;
+                }
+                
+                return sortState.direction === 'asc' ? comparison : -comparison;
+            });
+        }
+
+        // Check if entry has alert
+        function getAlertStatus(entry) {
+            const currentLevel = currentLevels[entry.index] || 0;
+            const watchLevel = entry.level || 0;
+            
+            if (currentLevel <= 0 || watchLevel <= 0) return null;
+            
+            const percentDistance = ((currentLevel - watchLevel) / watchLevel * 100);
+            
+            if (currentLevel <= watchLevel) {
+                return { type: 'high', percentDistance };
+            } else if (percentDistance <= 2 && percentDistance > 0) {
+                return { type: 'normal', percentDistance };
+            }
+            return null;
         }
 
         // ============================================
@@ -854,32 +1085,14 @@
             const alerts = [];
             
             entries.forEach(entry => {
-                const currentLevel = currentLevels[entry.index] || 0;
-                const watchLevel = entry.level || 0;
-                
-                if (currentLevel <= 0 || watchLevel <= 0) return;
-                
-                // Calculate percentage distance
-                const percentDistance = ((currentLevel - watchLevel) / watchLevel * 100);
-                
-                // HIGH ALERT: Current index <= watch level
-                if (currentLevel <= watchLevel) {
+                const alertStatus = getAlertStatus(entry);
+                if (alertStatus) {
                     alerts.push({
-                        type: 'high',
+                        type: alertStatus.type,
                         entry: entry,
-                        currentLevel: currentLevel,
-                        percentDistance: percentDistance,
-                        message: 'Index has reached or fallen below watch level'
-                    });
-                }
-                // NORMAL ALERT: Within 2% of watch level (but above it)
-                else if (percentDistance <= 2 && percentDistance > 0) {
-                    alerts.push({
-                        type: 'normal',
-                        entry: entry,
-                        currentLevel: currentLevel,
-                        percentDistance: percentDistance,
-                        message: 'Index is within 2% of watch level'
+                        currentLevel: currentLevels[entry.index] || 0,
+                        percentDistance: alertStatus.percentDistance,
+                        message: alertStatus.type === 'high' ? 'Index has reached or fallen below watch level' : 'Index is within 2% of watch level'
                     });
                 }
             });
@@ -980,12 +1193,9 @@
                     timestamp: record.fields.Timestamp
                 }));
 
-                // Sort by Name
-                entries.sort((a, b) => a.name.localeCompare(b.name));
-
                 renderTable();
                 updateStats();
-                checkAlerts(); // Check for alerts after fetching entries
+                checkAlerts();
                 return entries;
             } catch (error) {
                 console.error('Error fetching entries:', error);
@@ -1037,15 +1247,12 @@
                     timestamp: data.fields.Timestamp
                 });
 
-                // Sort by Name
-                entries.sort((a, b) => a.name.localeCompare(b.name));
-
                 // Refresh table
                 renderTable();
                 updateStats();
 
                 // Clear filters to show the new entry
-                if (filterState.name || filterState.index) {
+                if (filterState.name || filterState.index || filterState.alertType !== 'all') {
                     clearFilters();
                 }
 
@@ -1202,7 +1409,7 @@
                         level: data.fields['Watch Level'],
                         correction: data.fields.correction,
                         currentLevel: data.fields['Current Level'] || currentLevel,
-                        timestamp: entries[entryIndex].timestamp // Keep original timestamp
+                        timestamp: entries[entryIndex].timestamp
                     };
                 }
                 
@@ -1233,10 +1440,11 @@
         // ============================================
 
         function updateStats() {
-            const filteredCount = filterEntries(entries).length;
+            const filteredEntries = filterEntries(entries);
+            const filteredCount = filteredEntries.length;
             const totalCount = entries.length;
             
-            if (filterState.name || filterState.index) {
+            if (filterState.name || filterState.index || filterState.alertType !== 'all') {
                 document.getElementById('entry-count').textContent = `(${filteredCount} of ${totalCount} entries)`;
             } else {
                 document.getElementById('entry-count').textContent = `(${totalCount} entries)`;
@@ -1261,8 +1469,9 @@
         function renderTable() {
             const container = document.getElementById('table-container');
             
-            // Filter entries before rendering
-            const filteredEntries = filterEntries(entries);
+            // Filter and sort entries
+            let filteredEntries = filterEntries(entries);
+            filteredEntries = sortEntries(filteredEntries);
             
             if (filteredEntries.length === 0) {
                 container.innerHTML = `
@@ -1275,6 +1484,7 @@
                         <p>${entries.length === 0 ? 'No entries yet. Fill out the form above to get started.' : 'No entries match your filters.'}</p>
                     </div>
                 `;
+                updateStats();
                 return;
             }
 
@@ -1282,6 +1492,7 @@
                 <table>
                     <thead>
                         <tr>
+                            <th>Alert</th>
                             <th>Name</th>
                             <th>Reference</th>
                             <th>Index</th>
@@ -1295,21 +1506,28 @@
                     </thead>
                     <tbody>
                         ${filteredEntries.map(entry => {
-                            // Use LIVE current level for dynamic % distance calculation
                             const liveCurrentLevel = currentLevels[entry.index] || entry.currentLevel || 0;
-                            const percentDistance = liveCurrentLevel && entry.level ? ((entry.level - liveCurrentLevel) / liveCurrentLevel * 100).toFixed(2) : '0.00';
-                            const distanceClass = parseFloat(percentDistance) >= 0 ? 'level-positive' : 'level-negative';
+                            const percentDistance = liveCurrentLevel && entry.level ? ((entry.level - liveCurrentLevel) / liveCurrentLevel * 100) : 0;
+                            const distanceClass = percentDistance >= 0 ? 'level-positive' : 'level-negative';
                             const date = entry.timestamp ? new Date(entry.timestamp).toLocaleDateString() : 'N/A';
+                            
+                            // Check alert status
+                            const alertStatus = getAlertStatus(entry);
+                            let alertCell = '<span>-</span>';
+                            if (alertStatus) {
+                                alertCell = `<span class="alert-indicator ${alertStatus.type}" title="${alertStatus.type === 'high' ? 'High Alert' : 'Normal Alert'}"></span>`;
+                            }
                             
                             return `
                                 <tr>
+                                    <td style="text-align: center;">${alertCell}</td>
                                     <td><strong>${entry.name || 'N/A'}</strong></td>
                                     <td>${escapeHtml(entry.reference)}</td>
                                     <td><span class="index-tag">${entry.index}</span></td>
                                     <td><strong>${entry.correction !== null && entry.correction !== undefined ? entry.correction + '%' : 'N/A'}</strong></td>
                                     <td>${entry.level ? entry.level.toLocaleString() : 'N/A'}</td>
                                     <td>${liveCurrentLevel ? liveCurrentLevel.toLocaleString() : 'N/A'}</td>
-                                    <td class="${distanceClass}">${percentDistance > 0 ? '+' : ''}${percentDistance}%</td>
+                                    <td class="${distanceClass}">${percentDistance > 0 ? '+' : ''}${percentDistance.toFixed(2)}%</td>
                                     <td>${date}</td>
                                     <td>
                                         <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -1329,6 +1547,7 @@
             `;
 
             container.innerHTML = tableHTML;
+            updateStats();
         }
 
         function escapeHtml(text) {
@@ -1417,6 +1636,17 @@
             });
         }
 
+        // Alert filter radio handlers
+        document.querySelectorAll('input[name="alert-filter"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.querySelectorAll('.alert-radio-option').forEach(opt => {
+                    opt.classList.toggle('selected', opt.querySelector('input').checked);
+                });
+                filterState.alertType = this.value;
+                renderTable();
+            });
+        });
+
         // Validation
         function validateForm() {
             let isValid = true;
@@ -1471,21 +1701,14 @@
             let correction = null;
             const selectedRadio = document.querySelector('input[name="percentage"]:checked');
             
-            console.log('Form submission - selectedRadio:', selectedRadio);
-            
             if (selectedRadio) {
-                // User selected radio button
                 correction = parseFloat(selectedRadio.value);
-                console.log('Using radio value:', correction);
             } else {
-                // User entered manual level - calculate %
                 const currentLevel = currentLevels[indicesSelect.value];
                 const watchLevel = parseFloat(levelInput.value);
-                console.log('Manual entry - currentLevel:', currentLevel, 'watchLevel:', watchLevel);
                 if (currentLevel && watchLevel) {
                     correction = ((watchLevel - currentLevel) / currentLevel * 100);
-                    correction = Math.round(correction * 100) / 100; // Round to 2 decimals
-                    console.log('Calculated correction:', correction);
+                    correction = Math.round(correction * 100) / 100;
                 }
             }
 
@@ -1522,19 +1745,18 @@
         window.closeEditModal = closeEditModal;
         window.saveEdit = saveEdit;
         window.clearFilters = clearFilters;
+        window.setSort = setSort;
+        window.setAlertFilter = setAlertFilter;
 
         // ============================================
         // INITIALIZE
         // ============================================
 
         async function init() {
-            // Fetch entries from Airtable
             await fetchEntries();
         }
 
-        // Start the app
         init();
     </script>
 </body>
 </html>
- 
