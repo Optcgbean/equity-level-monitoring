@@ -17,7 +17,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
         }
         h1 {
@@ -32,6 +32,17 @@
             font-size: 0.9rem;
             margin-bottom: 30px;
         }
+        .section {
+            margin-bottom: 40px;
+        }
+        .section-title {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e74c3c;
+            display: inline-block;
+        }
         .lang-note {
             text-align: center;
             color: #e74c3c;
@@ -39,6 +50,8 @@
             margin-bottom: 20px;
             font-weight: 500;
         }
+
+        /* === WORDS SECTION === */
         .word-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -108,6 +121,66 @@
         .play-btn .btn-label {
             white-space: nowrap;
         }
+
+        /* === SENTENCES SECTION === */
+        .sentence-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .sentence-card {
+            background: white;
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .sentence-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .sentence-header {
+            font-size: 0.75rem;
+            color: #95a5a6;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .sentence-text {
+            font-size: 1.15rem;
+            line-height: 1.7;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+        .sentence-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-mandarin {
+            background: #e74c3c;
+            box-shadow: 0 2px 6px rgba(231, 76, 60, 0.3);
+        }
+        .btn-mandarin:hover {
+            background: #c0392b;
+        }
+        .btn-cantonese {
+            background: #27ae60;
+            box-shadow: 0 2px 6px rgba(39, 174, 96, 0.3);
+        }
+        .btn-cantonese:hover {
+            background: #219a52;
+        }
+        .btn-mandarin.playing {
+            background: #c0392b;
+            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.5);
+        }
+        .btn-cantonese.playing {
+            background: #219a52;
+            box-shadow: 0 2px 8px rgba(39, 174, 96, 0.5);
+        }
+
         @media (max-width: 400px) {
             .word-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -120,6 +193,9 @@
                 padding: 0 12px;
                 font-size: 0.8rem;
             }
+            .sentence-text {
+                font-size: 1.05rem;
+            }
         }
     </style>
 </head>
@@ -127,9 +203,19 @@
     <div class="container">
         <h1>中文詞語朗讀</h1>
         <p class="subtitle">點擊按鈕朗讀詞語</p>
-        <p class="lang-note">🔊 先讀普通話，再讀粵語</p>
+        <p class="lang-note">🔊 詞語：先讀普通話，再讀粵語</p>
 
-        <div class="word-grid" id="wordGrid"></div>
+        <!-- WORDS -->
+        <div class="section">
+            <div class="section-title">詞語</div>
+            <div class="word-grid" id="wordGrid"></div>
+        </div>
+
+        <!-- SENTENCES -->
+        <div class="section">
+            <div class="section-title">句子</div>
+            <div class="sentence-list" id="sentenceList"></div>
+        </div>
     </div>
 
     <script>
@@ -156,98 +242,183 @@
             { text: "自言自語", pinyin: "zì yán zì yǔ" }
         ];
 
-        const grid = document.getElementById('wordGrid');
+        const sentences = [
+            { group: "第一組", text: "1. 小烏龜很失望，一邊爬一邊想。" },
+            { group: "第一組", text: "2. 從現在開始，每種動物都按照自己習慣的方式過日子。" },
+            { group: "第二組", text: "1. 她又興奮又緊張，等待去一個新的家。" },
+            { group: "第二組", text: "2. 小桃花立即精神一振，她的新生活終於開始了！" },
+            { group: "第三組", text: "1. 小桃花賣不出去，給無情地掃到一邊。" },
+            { group: "第三組", text: "2. 森林旅店開業那天，許多旅客來住宿，把小兔忙得團團轉。" },
+            { group: "第四組", text: "1. 誰做得最好，誰就是森林裏的新大王。" },
+            { group: "第四組", text: "2. 森林裏來來往往的旅客很多，可是沒有一家旅店。" },
+            { group: "第五組", text: "1. 小兔仔細地閱讀旅客的批評意見。" },
+            { group: "第五組", text: "2. 小烏龜一聽，馬上把葉子、筷子、繩子全部抖下來。" }
+        ];
+
         let currentBtn = null;
         let isPlaying = false;
 
         const playIcon = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
         const stopIcon = '<svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>';
-        const waitIcon = '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
 
-        function speak(text, lang, rate, pitch, onEnd) {
+        function speak(text, lang, rate, pitch) {
             return new Promise((resolve) => {
                 window.speechSynthesis.cancel();
-                // Small delay to ensure cancel takes effect
                 setTimeout(() => {
                     const utterance = new SpeechSynthesisUtterance(text);
                     utterance.lang = lang;
                     utterance.rate = rate;
                     utterance.pitch = pitch;
-                    utterance.onend = () => {
-                        if (onEnd) onEnd();
-                        resolve();
-                    };
-                    utterance.onerror = () => {
-                        resolve();
-                    };
+                    utterance.onend = () => resolve();
+                    utterance.onerror = () => resolve();
                     window.speechSynthesis.speak(utterance);
                 }, 100);
             });
         }
 
-        async function playSequence(word, btn) {
-            if (isPlaying && currentBtn === btn) {
-                window.speechSynthesis.cancel();
-                isPlaying = false;
-                resetBtn(btn);
+        function stopAll() {
+            window.speechSynthesis.cancel();
+            isPlaying = false;
+            if (currentBtn) {
+                resetBtn(currentBtn);
                 currentBtn = null;
+            }
+        }
+
+        function setPlaying(btn, lang) {
+            if (currentBtn && currentBtn !== btn) {
+                resetBtn(currentBtn);
+            }
+            currentBtn = btn;
+            isPlaying = true;
+            btn.classList.add('playing');
+            btn.innerHTML = stopIcon + '<span class="btn-label">播放中</span>';
+        }
+
+        function resetBtn(btn) {
+            btn.classList.remove('playing');
+            if (btn.classList.contains('btn-mandarin')) {
+                btn.innerHTML = playIcon + '<span class="btn-label">普通話</span>';
+            } else if (btn.classList.contains('btn-cantonese')) {
+                btn.innerHTML = playIcon + '<span class="btn-label">粵語</span>';
+            } else {
+                btn.innerHTML = playIcon + '<span class="btn-label">朗讀</span>';
+            }
+        }
+
+        // === WORDS: single button plays both ===
+        async function playWordSequence(word, btn) {
+            if (isPlaying && currentBtn === btn) {
+                stopAll();
                 return;
             }
+            stopAll();
 
-            if (isPlaying) {
-                window.speechSynthesis.cancel();
-                if (currentBtn) resetBtn(currentBtn);
-            }
-
-            isPlaying = true;
             currentBtn = btn;
+            isPlaying = true;
 
-            // Phase 1: Mandarin
             btn.className = 'play-btn playing-mandarin';
             btn.innerHTML = playIcon + '<span class="btn-label">普通話</span>';
 
-            await speak(word.text, 'zh-TW', 0.85, 1, () => {
-                // Phase 2: Cantonese
-                btn.className = 'play-btn playing-cantonese';
-                btn.innerHTML = playIcon + '<span class="btn-label">粵語</span>';
-            });
+            await speak(word.text, 'zh-TW', 0.85, 1);
 
-            // Phase 2: Cantonese
+            btn.className = 'play-btn playing-cantonese';
+            btn.innerHTML = playIcon + '<span class="btn-label">粵語</span>';
+
             await speak(word.text, 'zh-HK', 0.85, 1);
 
-            // Reset
             resetBtn(btn);
             isPlaying = false;
             currentBtn = null;
         }
 
-        function resetBtn(btn) {
-            btn.className = 'play-btn';
-            btn.innerHTML = playIcon + '<span class="btn-label">朗讀</span>';
+        function renderWords() {
+            const grid = document.getElementById('wordGrid');
+            words.forEach((word) => {
+                const card = document.createElement('div');
+                card.className = 'word-card';
+
+                const text = document.createElement('div');
+                text.className = 'word-text';
+                text.textContent = word.text;
+
+                const btn = document.createElement('button');
+                btn.className = 'play-btn';
+                btn.innerHTML = playIcon + '<span class="btn-label">朗讀</span>';
+                btn.setAttribute('aria-label', `朗讀 ${word.text}（普通話及粵語）`);
+                btn.title = `朗讀：${word.text}`;
+
+                btn.addEventListener('click', () => playWordSequence(word, btn));
+
+                card.appendChild(text);
+                card.appendChild(btn);
+                grid.appendChild(card);
+            });
         }
 
-        words.forEach((word) => {
-            const card = document.createElement('div');
-            card.className = 'word-card';
+        // === SENTENCES: two separate buttons ===
+        async function playSentence(text, btn, lang) {
+            if (isPlaying && currentBtn === btn) {
+                stopAll();
+                return;
+            }
+            stopAll();
 
-            const text = document.createElement('div');
-            text.className = 'word-text';
-            text.textContent = word.text;
+            const langCode = lang === 'mandarin' ? 'zh-TW' : 'zh-HK';
+            setPlaying(btn, lang);
 
-            const btn = document.createElement('button');
-            btn.className = 'play-btn';
-            btn.innerHTML = playIcon + '<span class="btn-label">朗讀</span>';
-            btn.setAttribute('aria-label', `朗讀 ${word.text}（普通話及粵語）`);
-            btn.title = `朗讀：${word.text}`;
+            await speak(text, langCode, 0.8, 1);
 
-            btn.addEventListener('click', () => playSequence(word, btn));
+            resetBtn(btn);
+            isPlaying = false;
+            currentBtn = null;
+        }
 
-            card.appendChild(text);
-            card.appendChild(btn);
-            grid.appendChild(card);
-        });
+        function renderSentences() {
+            const list = document.getElementById('sentenceList');
+            sentences.forEach((sentence) => {
+                const card = document.createElement('div');
+                card.className = 'sentence-card';
 
-        // Ensure voices are loaded (some browsers need this)
+                const header = document.createElement('div');
+                header.className = 'sentence-header';
+                header.textContent = sentence.group;
+
+                const text = document.createElement('div');
+                text.className = 'sentence-text';
+                text.textContent = sentence.text;
+
+                const actions = document.createElement('div');
+                actions.className = 'sentence-actions';
+
+                const btnMandarin = document.createElement('button');
+                btnMandarin.className = 'play-btn btn-mandarin';
+                btnMandarin.innerHTML = playIcon + '<span class="btn-label">普通話</span>';
+                btnMandarin.setAttribute('aria-label', `普通話朗讀：${sentence.text}`);
+                btnMandarin.title = `普通話朗讀：${sentence.text}`;
+                btnMandarin.addEventListener('click', () => playSentence(sentence.text, btnMandarin, 'mandarin'));
+
+                const btnCantonese = document.createElement('button');
+                btnCantonese.className = 'play-btn btn-cantonese';
+                btnCantonese.innerHTML = playIcon + '<span class="btn-label">粵語</span>';
+                btnCantonese.setAttribute('aria-label', `粵語朗讀：${sentence.text}`);
+                btnCantonese.title = `粵語朗讀：${sentence.text}`;
+                btnCantonese.addEventListener('click', () => playSentence(sentence.text, btnCantonese, 'cantonese'));
+
+                actions.appendChild(btnMandarin);
+                actions.appendChild(btnCantonese);
+
+                card.appendChild(header);
+                card.appendChild(text);
+                card.appendChild(actions);
+                list.appendChild(card);
+            });
+        }
+
+        // === INIT ===
+        renderWords();
+        renderSentences();
+
         if (window.speechSynthesis.onvoiceschanged !== undefined) {
             window.speechSynthesis.onvoiceschanged = () => {
                 window.speechSynthesis.getVoices();
